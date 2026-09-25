@@ -1,0 +1,548 @@
+<Window x:Class="Tracealyzer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Tracealyzer"
+        xmlns:controls="clr-namespace:Tracealyzer.Controls"
+        xmlns:vm="clr-namespace:Tracealyzer.ViewModels"
+        mc:Ignorable="d"
+        Title="Percepio Tracealyzer - FreeRTOS Observability &amp; Trace Studio" 
+        Height="850" Width="1440" MinWidth="1024" MinHeight="650"
+        Background="{StaticResource BgDarkestBrush}"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Top Toolbar -->
+            <RowDefinition Height="Auto" />
+            <!-- Secondary Live/Hardware Bar -->
+            <RowDefinition Height="Auto" />
+            <!-- Main Content Area -->
+            <RowDefinition Height="*" />
+            <!-- Bottom Status Bar -->
+            <RowDefinition Height="28" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. TOP TOOLBAR -->
+        <Border Grid.Row="0" Background="{StaticResource BgDarkBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="12,8">
+            <DockPanel LastChildFill="True">
+                <!-- Branding -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0" DockPanel.Dock="Left">
+                    <Border Background="#00b4d8" CornerRadius="6" Width="28" Height="28" Margin="0,0,10,0">
+                        <TextBlock Text="⚡" FontSize="16" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="PERCEPIO" FontWeight="Black" FontSize="14" Foreground="#00b4d8" Margin="0,0,5,0" />
+                            <TextBlock Text="TRACEALYZER" FontWeight="Bold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <Border Background="#1e3a5f" CornerRadius="3" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="FreeRTOS v10" FontSize="10" FontWeight="SemiBold" Foreground="#38bdf8" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Kernel Trace &amp; RTOS Timing Diagnostics" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Actions Right Side -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <!-- Zoom Controls -->
+                    <Border Background="{StaticResource BgMediumBrush}" CornerRadius="5" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="4,2" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Command="{Binding ZoomInCommand}" ToolTip="Zoom In (or Mouse Wheel Up)" Width="30" Height="26" Padding="0" Margin="1,0">
+                                <TextBlock Text="➕" FontSize="11" />
+                            </Button>
+                            <Button Command="{Binding ZoomOutCommand}" ToolTip="Zoom Out (or Mouse Wheel Down)" Width="30" Height="26" Padding="0" Margin="1,0">
+                                <TextBlock Text="➖" FontSize="11" />
+                            </Button>
+                            <Button Command="{Binding ZoomFitCommand}" ToolTip="Zoom to Fit Entire Trace" Width="36" Height="26" Padding="0" Margin="1,0">
+                                <TextBlock Text="⇄ Fit" FontSize="11" />
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Auto Scroll Toggle -->
+                    <ToggleButton IsChecked="{Binding FollowLive}" ToolTip="Follow Live (Auto-scroll to newest events)" 
+                                  Background="{StaticResource BgLightBrush}" Foreground="{StaticResource TextPrimaryBrush}"
+                                  Padding="10,5" Margin="0,0,10,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" Margin="0,0,6,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#64748b" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding FollowLive}" Value="True">
+                                                <Setter Property="Fill" Value="#10b981" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="Auto Scroll" FontSize="12" />
+                        </StackPanel>
+                    </ToggleButton>
+
+                    <!-- File Operations -->
+                    <Button Command="{Binding LoadDemoTraceCommand}" Style="{StaticResource AccentButton}" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="★" Margin="0,0,5,0" />
+                            <TextBlock Text="Run FreeRTOS Demo" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding OpenFileCommand}" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📂" Margin="0,0,5,0" />
+                            <TextBlock Text="Open Trace..." />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding SaveTraceCommand}" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💾" Margin="0,0,5,0" />
+                            <TextBlock Text="Export JSON" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ClearSessionCommand}">
+                        <TextBlock Text="🗑 Clear" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Current Viewport Window Readout -->
+                <Border Background="{StaticResource BgDarkestBrush}" CornerRadius="4" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" 
+                        Padding="10,4" Margin="20,0,20,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="TIME WINDOW: " FontWeight="Bold" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock Text="{Binding ViewportTimeRangeDisplay}" FontSize="11" Foreground="#38bdf8" />
+                    </StackPanel>
+                </Border>
+            </DockPanel>
+        </Border>
+
+        <!-- 2. HARDWARE & STREAMING STRIP -->
+        <Border Grid.Row="1" Background="{StaticResource BgMediumBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="12,6">
+            <DockPanel LastChildFill="True">
+                <!-- Measurement Readout if available -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <Border Background="#1e293b" CornerRadius="4" BorderBrush="#00b4d8" BorderThickness="1" Padding="8,4" Margin="0,0,6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="MEASURE: " FontWeight="Bold" FontSize="11" Foreground="#00b4d8" />
+                            <TextBlock Text="ΔT = " FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <TextBlock Text="{Binding Measurement.FormattedDelta}" FontWeight="SemiBold" FontSize="11" Foreground="#ffffff" />
+                            <TextBlock Text=" | Freq = " FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="6,0,0,0" />
+                            <TextBlock Text="{Binding Measurement.FormattedFrequency}" FontWeight="SemiBold" FontSize="11" Foreground="#fbbf24" />
+                        </StackPanel>
+                    </Border>
+                    <Button Command="{Binding ClearMeasurementCommand}" ToolTip="Clear measurement markers (T1, T2)" Padding="6,2" FontSize="11">
+                        <TextBlock Text="✕" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Hardware Inputs -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="LIVE DATA SOURCE:" FontWeight="Bold" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+
+                    <!-- Live Simulation Stream -->
+                    <Button Command="{Binding StartSimulationStreamCommand}" Margin="0,0,14,0" Padding="10,4">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="7" Height="7" Margin="0,0,6,0" VerticalAlignment="Center">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#10b981" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsLiveStreaming}" Value="True">
+                                                <Setter Property="Fill" Value="#ef4444" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="{Binding StreamButtonLabel}" FontWeight="SemiBold" FontSize="11" />
+                        </StackPanel>
+                    </Button>
+
+                    <Rectangle Width="1" Height="18" Fill="{StaticResource BorderBrush}" Margin="0,0,14,0" />
+
+                    <!-- Serial COM Port -->
+                    <TextBlock Text="UART COM:" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <ComboBox ItemsSource="{Binding AvailableComPorts}" SelectedItem="{Binding SelectedComPort}" IsEnabled="{Binding CanChangeSourceSettings}" Width="90" Height="26" Margin="0,0,6,0" />
+                    <ComboBox ItemsSource="{Binding AvailableBaudRates}" SelectedItem="{Binding SelectedBaudRate}" IsEnabled="{Binding CanChangeSourceSettings}" Width="90" Height="26" Margin="0,0,6,0" />
+                    <Button Command="{Binding ConnectSerialCommand}" Content="Connect UART" FontSize="11" Padding="8,3" Margin="0,0,14,0" />
+
+                    <Rectangle Width="1" Height="18" Fill="{StaticResource BorderBrush}" Margin="0,0,14,0" />
+
+                    <!-- TCP Socket / Segger RTT -->
+                    <TextBlock Text="TCP / RTT:" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox Text="{Binding TcpHost}" IsEnabled="{Binding CanChangeSourceSettings}" Width="95" Height="26" Margin="0,0,4,0" />
+                    <TextBox Text="{Binding TcpPort}" IsEnabled="{Binding CanChangeSourceSettings}" Width="55" Height="26" Margin="0,0,6,0" />
+                    <Button Command="{Binding ConnectTcpCommand}" Content="Connect TCP" FontSize="11" Padding="8,3" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- 3. MAIN WORKSPACE WITH SPLITTERS -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <!-- Left Task/Actor Overview -->
+                <ColumnDefinition Width="260" MinWidth="180" MaxWidth="400" />
+                <!-- Splitter -->
+                <ColumnDefinition Width="4" />
+                <!-- Center/Right: Timeline + Details -->
+                <ColumnDefinition Width="*" MinWidth="500" />
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT PANEL: ACTORS & TASKS SUMMARY -->
+            <Border Grid.Column="0" Background="{StaticResource BgDarkColor}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Header -->
+                    <Border Grid.Row="0" Background="{StaticResource BgMediumBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="12,10">
+                        <DockPanel>
+                            <TextBlock Text="RTOS ACTORS &amp; TASKS" FontWeight="Bold" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ActorsList.Count, StringFormat='({0})'}" FontWeight="SemiBold" FontSize="11" Foreground="#38bdf8" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Actor List -->
+                    <ListBox Grid.Row="1" ItemsSource="{Binding ActorsList}" SelectedItem="{Binding SelectedActor}"
+                             Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="8,6" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0,0,0,1" />
+                                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#1e293b" />
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#1a1d24" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Visibility Checkbox -->
+                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsVisible}" VerticalAlignment="Center" Margin="0,0,8,0" />
+
+                                    <!-- Color Swatch -->
+                                    <Border Grid.Column="1" Background="{Binding Brush}" CornerRadius="3" Width="10" Height="24" Margin="0,0,8,0" />
+
+                                    <!-- Name & Priority -->
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Type}" FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                                            <TextBlock Text=" | Prio: " FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                                            <TextBlock Text="{Binding Priority}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- CPU Utilization % Badge -->
+                                    <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                        <Border Background="#1e3a5f" CornerRadius="3" Padding="6,2" HorizontalAlignment="Right">
+                                            <TextBlock Text="{Binding CpuUtilizationDisplay}" FontWeight="Bold" FontSize="11" Foreground="#38bdf8" />
+                                        </Border>
+                                        <TextBlock Text="{Binding TotalExecutionTimeDisplay}" FontSize="9" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Quick Legend & Controls -->
+                    <Border Grid.Row="2" Background="{StaticResource BgMediumBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="10,8">
+                        <StackPanel>
+                            <TextBlock Text="💡 Hint: Left-click ruler for T1, Right-click for T2." FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+                            <TextBlock Text="Scroll mouse wheel over timeline to zoom." FontSize="10" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- SPLITTER 1 -->
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="{StaticResource BorderBrush}" ResizeBehavior="PreviousAndNext" />
+
+            <!-- RIGHT SECTION: TIMELINE + DETAILS SPLIT -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <!-- Timeline & Chart Section -->
+                    <RowDefinition Height="3*" MinHeight="250" />
+                    <!-- Splitter -->
+                    <RowDefinition Height="4" />
+                    <!-- Event Log & Inspector Bottom Section -->
+                    <RowDefinition Height="2*" MinHeight="160" />
+                </Grid.RowDefinitions>
+
+                <!-- TOP SECTION: TIMELINE, MINIMAP, CPU LOAD -->
+                <Grid Grid.Row="0">
+                    <Grid.RowDefinitions>
+                        <!-- Main Timeline -->
+                        <RowDefinition Height="*" />
+                        <!-- Minimap Overview -->
+                        <RowDefinition Height="Auto" />
+                        <!-- CPU Load Chart -->
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Main Timeline Control -->
+                    <controls:TraceTimelineControl Grid.Row="0" ViewModel="{Binding}" />
+
+                    <!-- Minimap Overview Bar -->
+                    <controls:TraceMinimapControl Grid.Row="1" ViewModel="{Binding}" Margin="0,2,0,0" />
+
+                    <!-- CPU Load Breakdown Chart -->
+                    <controls:CpuLoadChartControl Grid.Row="2" ViewModel="{Binding}" Margin="0,2,0,0" />
+                </Grid>
+
+                <!-- SPLITTER 2 -->
+                <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" Background="{StaticResource BorderBrush}" ResizeBehavior="PreviousAndNext" />
+
+                <!-- BOTTOM SECTION: TABS (EVENT LOG / INSPECTOR / STATS) -->
+                <TabControl Grid.Row="2" Background="{StaticResource BgDarkColor}" BorderThickness="0">
+                    <!-- TAB 1: EVENT LOG TABLE -->
+                    <TabItem Header="Event Log &amp; Synchronization History">
+                        <Grid Background="{StaticResource BgDarkColor}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Filter Bar -->
+                            <Border Grid.Row="0" Background="{StaticResource BgMediumBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="10,6">
+                                <DockPanel LastChildFill="True">
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                                        <TextBlock Text="Search:" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <TextBox Text="{Binding EventSearchText, UpdateSourceTrigger=PropertyChanged}" Width="200" Height="24" Margin="0,0,16,0" />
+
+                                        <TextBlock Text="Category Filter:" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <ComboBox ItemsSource="{Binding AvailableCategories}" SelectedItem="{Binding SelectedCategoryFilter}" Width="140" Height="24" />
+                                    </StackPanel>
+
+                                    <TextBlock Text="{Binding Session.Events.Count, StringFormat='Showing {0:N0} recorded events'}" 
+                                               FontSize="11" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                </DockPanel>
+                            </Border>
+
+                            <!-- Events DataGrid -->
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredEvents}" SelectedItem="{Binding SelectedEvent}"
+                                      EnableRowVirtualization="True" EnableColumnVirtualization="True"
+                                      ScrollViewer.CanContentScroll="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding SequenceNumber}" Width="70" />
+                                    <DataGridTextColumn Header="Timestamp" Binding="{Binding FormattedTime}" Width="110" />
+                                    <DataGridTextColumn Header="Category" Binding="{Binding EventCategory}" Width="110" />
+                                    <DataGridTextColumn Header="Type" Binding="{Binding TypeDisplay}" Width="150" />
+                                    <DataGridTextColumn Header="Actor / Task" Binding="{Binding ActorName}" Width="130" />
+                                    <DataGridTextColumn Header="Priority" Binding="{Binding Priority}" Width="70" />
+                                    <DataGridTextColumn Header="Details &amp; Arguments" Binding="{Binding Details}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- TAB 2: INSPECTOR PANEL -->
+                    <TabItem Header="Actor &amp; Interval Inspector">
+                        <ScrollViewer Background="{StaticResource BgDarkColor}" VerticalScrollBarVisibility="Auto" Padding="16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Selected Interval Info -->
+                                <Border Grid.Column="0" Background="{StaticResource BgMediumBrush}" CornerRadius="6" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="16" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="SELECTED EXECUTION INTERVAL" FontWeight="Bold" FontSize="12" Foreground="#00b4d8" Margin="0,0,0,12" />
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Actor / Task:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedInterval.Actor.Name, TargetNullValue='(Click an interval in the timeline)'}" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Duration:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedInterval.FormattedDuration, TargetNullValue='-'}" FontWeight="SemiBold" Foreground="#10b981" />
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Start Timestamp:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedInterval.StartUs, TargetNullValue='-', StringFormat='{}{0:F2} µs'}" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="End Timestamp:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedInterval.EndUs, TargetNullValue='-', StringFormat='{}{0:F2} µs'}" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Was Preempted:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedInterval.IsPreempted, TargetNullValue='-'}" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Preempted By:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedInterval.PreemptedBy, TargetNullValue='None'}" Foreground="#ef4444" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Selected Event Info -->
+                                <Border Grid.Column="1" Background="{StaticResource BgMediumBrush}" CornerRadius="6" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="16" Margin="8,0,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="SELECTED KERNEL EVENT" FontWeight="Bold" FontSize="12" Foreground="#00b4d8" Margin="0,0,0,12" />
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Sequence #:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedEvent.SequenceNumber, TargetNullValue='(Select an event in the table)'}" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Timestamp:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedEvent.FormattedTime, TargetNullValue='-'}" FontWeight="SemiBold" Foreground="#38bdf8" />
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Event Type:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedEvent.TypeDisplay, TargetNullValue='-'}" FontWeight="Bold" Foreground="#fbbf24" />
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Actor / Task:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedEvent.ActorName, TargetNullValue='-'}" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </Grid>
+
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Details:" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding SelectedEvent.Details, TargetNullValue='-'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- TAB 3: TRACE SESSION STATS -->
+                    <TabItem Header="Kernel Diagnostics &amp; Statistics">
+                        <ScrollViewer Background="{StaticResource BgDarkColor}" Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="FREERTOS TRACE SESSION SUMMARY" FontWeight="Bold" FontSize="13" Foreground="#00b4d8" Margin="0,0,0,16" />
+
+                                <UniformGrid Columns="4" Margin="0,0,0,16">
+                                    <Border Background="{StaticResource BgMediumBrush}" CornerRadius="6" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="14,10" Margin="4">
+                                        <StackPanel>
+                                            <TextBlock Text="TOTAL RECORDED TIME" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding TotalDurationDisplay}" FontSize="18" FontWeight="Black" Foreground="#10b981" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="{StaticResource BgMediumBrush}" CornerRadius="6" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="14,10" Margin="4">
+                                        <StackPanel>
+                                            <TextBlock Text="KERNEL EVENTS" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding EventCountDisplay}" FontSize="18" FontWeight="Black" Foreground="#38bdf8" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="{StaticResource BgMediumBrush}" CornerRadius="6" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="14,10" Margin="4">
+                                        <StackPanel>
+                                            <TextBlock Text="EXECUTION SLICES" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding IntervalCountDisplay}" FontSize="18" FontWeight="Black" Foreground="#fbbf24" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="{StaticResource BgMediumBrush}" CornerRadius="6" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="14,10" Margin="4">
+                                        <StackPanel>
+                                            <TextBlock Text="REGISTERED ACTORS" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{Binding ActorsList.Count}" FontSize="18" FontWeight="Black" Foreground="#c084fc" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+        </Grid>
+
+        <!-- 4. BOTTOM STATUS BAR -->
+        <Border Grid.Row="3" Background="{StaticResource BgMediumBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="12,0">
+            <DockPanel LastChildFill="True">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <TextBlock Text="Kernel: " FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBlock Text="{Binding Session.RtosName}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,16,0" />
+
+                    <TextBlock Text="Tick Rate: " FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBlock Text="{Binding Session.TickRateHz, StringFormat='{}{0} Hz'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,16,0" />
+
+                    <TextBlock Text="Active View: " FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBlock Text="{Binding ViewportDurationUs, StringFormat='{}{0:F1} µs window'}" FontSize="11" Foreground="#38bdf8" />
+                </StackPanel>
+
+                <!-- Status Message -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" Fill="#10b981" Margin="0,0,8,0" />
+                    <TextBlock Text="{Binding StatusMessage}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

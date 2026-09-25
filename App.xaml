@@ -1,0 +1,18 @@
+<Application x:Class="Tracealyzer.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Tracealyzer"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/DarkTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            
+            <FontFamily x:Key="AppFont">Segoe UI, Apple SD Gothic Neo, Malgun Gothic, sans-serif</FontFamily>
+            <Style TargetType="Window">
+                <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
