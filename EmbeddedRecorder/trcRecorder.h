@@ -16,11 +16,20 @@ extern "C" {
 
 #include <stdint.h>
 
-/* Initialize trace recorder (UART or TCP output buffer) */
-void vTraceRecorderInit(void);
+/* Initialize trace recorder (UART or SEGGER RTT)
+ * Pass CPU frequency in Hz (e.g., 160000000 for S32K344 160MHz) */
+void vTraceRecorderInit(uint32_t cpu_freq_hz);
 
-/* Send formatted trace event over UART / RTT */
+/* Send formatted trace event over RTT / UART */
 void vTraceRecordEvent(uint32_t ts_us, const char* event_type, uint32_t actor_id, const char* name, uint32_t prio, const char* details);
+
+/* Helper macros for ISR logging */
+#define vTraceRecordIsrEnter(isr_id, isr_name) \
+    vTraceRecordEvent(ulTraceGetMicroseconds(), "IsrEnter", (uint32_t)(isr_id), (isr_name), 0, "ISR Enter")
+
+#define vTraceRecordIsrExit(isr_id, isr_name) \
+    vTraceRecordEvent(ulTraceGetMicroseconds(), "IsrExit", (uint32_t)(isr_id), (isr_name), 0, "ISR Exit")
+
 
 /* User Event / Printf logging */
 void vTraceUserPrint(const char* channel, const char* format, ...);

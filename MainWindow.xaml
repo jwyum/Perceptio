@@ -194,7 +194,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- LEFT PANEL: ACTORS & TASKS SUMMARY -->
-            <Border Grid.Column="0" Background="{StaticResource BgDarkColor}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" Background="{StaticResource BgDarkBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -317,10 +317,10 @@
                 <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" Background="{StaticResource BorderBrush}" ResizeBehavior="PreviousAndNext" />
 
                 <!-- BOTTOM SECTION: TABS (EVENT LOG / INSPECTOR / STATS) -->
-                <TabControl Grid.Row="2" Background="{StaticResource BgDarkColor}" BorderThickness="0">
+                <TabControl Grid.Row="2" Background="{StaticResource BgDarkBrush}" BorderThickness="0">
                     <!-- TAB 1: EVENT LOG TABLE -->
                     <TabItem Header="Event Log &amp; Synchronization History">
-                        <Grid Background="{StaticResource BgDarkColor}">
+                        <Grid Background="{StaticResource BgDarkBrush}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
@@ -361,7 +361,7 @@
 
                     <!-- TAB 2: INSPECTOR PANEL -->
                     <TabItem Header="Actor &amp; Interval Inspector">
-                        <ScrollViewer Background="{StaticResource BgDarkColor}" VerticalScrollBarVisibility="Auto" Padding="16">
+                        <ScrollViewer Background="{StaticResource BgDarkBrush}" VerticalScrollBarVisibility="Auto" Padding="16">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -486,7 +486,7 @@
 
                     <!-- TAB 3: TRACE SESSION STATS -->
                     <TabItem Header="Kernel Diagnostics &amp; Statistics">
-                        <ScrollViewer Background="{StaticResource BgDarkColor}" Padding="16">
+                        <ScrollViewer Background="{StaticResource BgDarkBrush}" Padding="16">
                             <StackPanel>
                                 <TextBlock Text="FREERTOS TRACE SESSION SUMMARY" FontWeight="Bold" FontSize="13" Foreground="#00b4d8" Margin="0,0,0,16" />
 

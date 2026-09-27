@@ -80,7 +80,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource AccentColor}" />
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource AccentBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="#03045e" />
@@ -131,12 +131,12 @@
 
     <!-- DataGrid Modern Style -->
     <Style TargetType="DataGrid">
-        <Setter Property="Background" Value="{StaticResource BgDarkColor}" />
+        <Setter Property="Background" Value="{StaticResource BgDarkBrush}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="RowBackground" Value="{StaticResource BgDarkColor}" />
-        <Setter Property="AlternatingRowBackground" Value="{StaticResource BgMediumColor}" />
+        <Setter Property="RowBackground" Value="{StaticResource BgDarkBrush}" />
+        <Setter Property="AlternatingRowBackground" Value="{StaticResource BgMediumBrush}" />
         <Setter Property="GridLinesVisibility" Value="Horizontal" />
         <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="HeadersVisibility" Value="Column" />
@@ -185,7 +185,7 @@
 
     <!-- TabControl Style -->
     <Style TargetType="TabControl">
-        <Setter Property="Background" Value="{StaticResource BgDarkColor}" />
+        <Setter Property="Background" Value="{StaticResource BgDarkBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
     </Style>
 
