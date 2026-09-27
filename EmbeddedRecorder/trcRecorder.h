@@ -16,6 +16,10 @@ extern "C" {
 
 #include <stdint.h>
 
+#ifndef USE_SEGGER_RTT
+#define USE_SEGGER_RTT 1
+#endif
+
 /* Initialize trace recorder (UART or SEGGER RTT)
  * Pass CPU frequency in Hz (e.g., 160000000 for S32K344 160MHz) */
 void vTraceRecorderInit(uint32_t cpu_freq_hz);
